@@ -1,0 +1,57 @@
+# Feasibility check of the MSIDS-IoT request path.
+#
+#     docker compose up -d --build
+#     python -m experiments.mvp_demo
+#     docker compose down
+#
+# The IDMS holds a placeholder policy (experiments/mvp/rules.json): one rule,
+# no learned model. The IDMS and the DCMS are published on the loopback
+# interface so that the demonstration can send one altered trace to the IDMS
+# and read the device states; in the architecture only the gateway is reachable.
+# Simulation mode lets each request carry a set clock time, so the run is the
+# same every time.
+name: msids-iot-feasibility
+
+services:
+  gateway:
+    build: .
+    command: uvicorn gateway.main:app --host 0.0.0.0 --port 8000 --log-level warning
+    ports:
+      - "127.0.0.1:8300:8000"
+    environment:
+      UMMS_URL: http://umms:8003
+      IDMS_URL: http://idms:8001
+      DCMS_URL: http://dcms:8002
+      TRACE_LOG: /app/out/traces.jsonl
+      SIMULATION_MODE: "1"
+    volumes:
+      - ./results/mvp:/app/out
+    depends_on:
+      - umms
+      - idms
+      - dcms
+
+  idms:
+    build: .
+    command: uvicorn idms.main:app --host 0.0.0.0 --port 8001 --log-level warning
+    ports:
+      - "127.0.0.1:8301:8001"
+    environment:
+      SIMULATION_MODE: "1"
+      IDMS_DETECTOR: rules
+      IDMS_MODELS: /app/mvp
+      IDMS_ENFORCE: "1"
+    volumes:
+      - ./experiments/mvp:/app/mvp:ro
+
+  dcms:
+    build: .
+    command: uvicorn dcms.main:app --host 0.0.0.0 --port 8002 --log-level warning
+    ports:
+      - "127.0.0.1:8302:8002"
+    environment:
+      SIMULATION_MODE: "1"
+
+  umms:
+    build: .
+    command: uvicorn umms.main:app --host 0.0.0.0 --port 8003 --log-level warning
