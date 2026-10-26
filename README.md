@@ -1,8 +1,8 @@
 # MSIDS-IoT: feasibility check of the request path
 
 This repository contains the code and the recorded outcomes of the feasibility
-check reported in Section 4.2 of the paper *Microservices Architecture with
-Machine Learning for Intrusion Detection in Internet of Things Security*
+check reported in Section 4.2 of the paper *Trace-Driven Dual-Layer Intrusion Detection for Smart Homes Built on
+Microservices and Machine Learning*
 (A. El Akhdar, C. Baidada, A. Kartit, M. Hanine).
 
 It implements the request path of the MSIDS-IoT architecture as four Python
