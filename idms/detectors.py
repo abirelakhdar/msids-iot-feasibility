@@ -43,7 +43,7 @@ class RuleDetector:
         return bool(reasons), "rules: " + (", ".join(reasons) if reasons else "nothing fired")
 
 
-LEARNED = ("tree", "forest", "logistic")
+LEARNED = ("tree", "forest", "logistic", "svm")
 
 
 class ModelDetector:

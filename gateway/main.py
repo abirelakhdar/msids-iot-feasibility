@@ -15,6 +15,9 @@ from shared.trace_schema import ExecutionTrace, TraceContext, TraceStatus, Trace
 
 UMMS_URL = os.getenv("UMMS_URL", "http://localhost:8003")
 IDMS_URL = os.getenv("IDMS_URL", "http://localhost:8001")
+# How long the gateway waits for the IDMS before refusing the request (fail
+# closed). Unset: the client's default of 5 s, as in all earlier experiments.
+IDMS_TIMEOUT = float(os.environ["IDMS_TIMEOUT"]) if os.getenv("IDMS_TIMEOUT") else None
 DCMS_URL = os.getenv("DCMS_URL", "http://localhost:8002")
 TRACE_LOG = Path(os.getenv("TRACE_LOG", "data/traces.jsonl"))
 # Dataset generation only: lets the simulator stamp traces with simulated time.
@@ -114,7 +117,8 @@ async def handle_request(req: DeviceRequest, x_sim_time: datetime | None = Heade
         if not auth["allowed"]:
             return finish(trace, "denied", 403, auth["reason"])
 
-        verdict = await client.post(f"{IDMS_URL}/analyze", json=trace.model_dump(mode="json"))
+        verdict = await client.post(f"{IDMS_URL}/analyze", json=trace.model_dump(mode="json"),
+                                    **({"timeout": IDMS_TIMEOUT} if IDMS_TIMEOUT else {}))
         verdict.raise_for_status()
         verdict = verdict.json()
         trace.decision = verdict["decision"]
