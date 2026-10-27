@@ -1,0 +1,9 @@
+{
+ "burst": 1000000000,
+ "switching": 1000000000,
+ "repetition": 1000000000,
+ "refusals": 1000000000,
+ "coldest": -1000000000,
+ "hottest": 1000000000,
+ "night_unlock": true
+}

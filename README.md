@@ -40,6 +40,45 @@ authentication), services talk plain HTTP, and traces are hashed but not signed.
 The recorded outcomes and traces are in `results/mvp/` (`outcomes.json`,
 `traces.jsonl`).
 
+## Second run: trained models, latency, resources, failure of the IDMS
+
+The second part of Section 4.2 (Table 8) puts two simple trained models in the
+IDMS, next to the rule, and measures what the IDMS costs.
+
+- `experiments/feasibility/scenario.py` generates the requests of a synthetic
+  home: three accounts (resident, household member, visitor), a lamp, a
+  thermostat and a door lock, daily habits written by hand, and four kinds of
+  misuse (door unlocked at night, extreme heating setpoint, lamp switched six
+  times in 75 seconds, visitor trying the lock).
+- `experiments/feasibility/train.py` trains a decision tree and an SVM on 60
+  days of such requests and saves them in `experiments/feasibility/models/`
+  (the saved models are included, written with scikit-learn 1.9.1).
+- `experiments/feasibility/run.py` sends 199 test requests from 18 later days
+  through the gateway, four times for each detector (none, rule, tree, SVM),
+  exchanging the detector in the running IDMS between runs. It also times the
+  IDMS alone, samples CPU and memory with `docker stats`, then stops the IDMS
+  to see what the gateway does without it.
+
+Results (`results/feasibility/summary.json`, per-request rows in
+`requests.csv`), on a laptop with 8 logical processors, Windows 11 and Docker
+Desktop:
+
+| Detector | Blocked: misuse (of 24) / legitimate (of 172) | IDMS alone, median (p95), ms | Whole request, median (p95), ms | IDMS CPU, mean |
+|---|---|---|---|---|
+| None | 0 / 0 | 3.9 (6.0) | 17.5 (28.2) | 9.0% |
+| Rule (control baseline) | 3 / 0 | 4.1 (7.3) | 18.0 (29.7) | 9.9% |
+| Decision tree | 21 / 9 | 4.5 (8.4) | 17.6 (28.8) | 11.9% |
+| SVM | 21 / 0 | 7.0 (12.3) | 22.1 (37.7) | 17.6% |
+
+The IDMS used about 100 MiB of memory with every detector. With the IDMS
+stopped and the gateway waiting at most one second (`IDMS_TIMEOUT`), requests
+were refused with HTTP 503 after about one second and no device changed state;
+after a restart the next request was executed normally.
+
+The home and its misuse are small and synthetic: these figures show trained
+models running on the request path and what they cost, not detection
+performance on real households.
+
 ## Reproduce
 
 Requirements: Docker with Docker Compose, and Python 3.11 or later with the
@@ -55,6 +94,16 @@ outcomes every time; the script exits with an error if any outcome differs from
 the expected one. The same scenarios also run in one process, without Docker:
 
     pytest
+
+The second run needs scikit-learn as well:
+
+    pip install -r requirements.txt -r requirements-ml.txt
+    python -m experiments.feasibility.train      # optional: the models are included
+    docker compose -f docker-compose.feasibility.yml up -d --build
+    python -m experiments.feasibility.run
+    docker compose -f docker-compose.feasibility.yml down
+
+Latency and CPU depend on the machine; the outcomes of each request do not.
 
 ## Licence
 

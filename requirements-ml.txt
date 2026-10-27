@@ -1,0 +1,7 @@
+# What the IDMS needs to load a learned detector. The versions are those the
+# saved detectors (models/*.pkl) were written with: a saved model is only
+# guaranteed to load with the same version of its library.
+scikit-learn==1.9.1
+numpy==2.5.3
+scipy==1.18.1
+joblib==1.6.0

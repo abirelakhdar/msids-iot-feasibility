@@ -1,0 +1,15 @@
+# The IDMS with scikit-learn, so that it can load the trained detectors of
+# experiments/feasibility/models (mounted by docker-compose.feasibility.yml).
+# The other services keep the slim image of Dockerfile.
+FROM python:3.13-slim
+
+WORKDIR /app
+
+COPY requirements.txt requirements-ml.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-ml.txt
+
+COPY shared shared
+COPY idms idms
+COPY features features
+COPY baselines baselines
+COPY detectors detectors

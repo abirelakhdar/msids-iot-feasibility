@@ -1,0 +1,60 @@
+# Feasibility check of the architecture paper, with trained models (Section 4.2):
+#
+#     python -m experiments.feasibility.train
+#     docker compose -f docker-compose.feasibility.yml up -d --build
+#     python -m experiments.feasibility.run
+#     docker compose -f docker-compose.feasibility.yml down
+#
+# Separate project name and ports, so it never touches the other stacks. The
+# IDMS carries scikit-learn (Dockerfile.idms-ml) and loads its detectors from
+# experiments/feasibility/models; the run exchanges them through its endpoint.
+# The IDMS and the DCMS are published on the loopback interface for the run
+# (detector exchange, reset, device states); in the architecture only the
+# gateway is reachable. Simulation mode lets each request carry its clock time.
+name: msids-feasibility
+
+services:
+  gateway:
+    build: .
+    command: uvicorn gateway.main:app --host 0.0.0.0 --port 8000 --log-level warning
+    ports:
+      - "127.0.0.1:8400:8000"
+    environment:
+      UMMS_URL: http://umms:8003
+      IDMS_URL: http://idms:8001
+      DCMS_URL: http://dcms:8002
+      TRACE_LOG: /tmp/feasibility/traces.jsonl
+      SIMULATION_MODE: "1"
+      # fail fast and closed if the IDMS does not answer
+      IDMS_TIMEOUT: "1"
+    depends_on:
+      - umms
+      - idms
+      - dcms
+
+  idms:
+    build:
+      context: .
+      dockerfile: Dockerfile.idms-ml
+    command: uvicorn idms.main:app --host 0.0.0.0 --port 8001 --log-level warning
+    ports:
+      - "127.0.0.1:8401:8001"
+    environment:
+      SIMULATION_MODE: "1"
+      IDMS_DETECTOR: rules
+      IDMS_MODELS: /app/feasibility_models
+      IDMS_ENFORCE: "1"
+    volumes:
+      - ./experiments/feasibility/models:/app/feasibility_models:ro
+
+  dcms:
+    build: .
+    command: uvicorn dcms.main:app --host 0.0.0.0 --port 8002 --log-level warning
+    ports:
+      - "127.0.0.1:8402:8002"
+    environment:
+      SIMULATION_MODE: "1"
+
+  umms:
+    build: .
+    command: uvicorn umms.main:app --host 0.0.0.0 --port 8003 --log-level warning

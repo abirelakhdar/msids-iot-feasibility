@@ -1,0 +1,22 @@
+{
+ "training": {
+  "seed": 1,
+  "days": 60,
+  "requests": 598,
+  "seen_by_idms": 593,
+  "misuse": 37
+ },
+ "tree": {
+  "max_depth": 6,
+  "min_samples_leaf": 3,
+  "leaves": 11
+ },
+ "svm": {
+  "kernel": "rbf",
+  "missing values": "median",
+  "scaling": "standard",
+  "probabilities": "calibrated (sigmoid, 5-fold)"
+ },
+ "threshold": 0.5,
+ "features": 49
+}
