@@ -75,6 +75,9 @@ stopped and the gateway waiting at most one second (`IDMS_TIMEOUT`), requests
 were refused with HTTP 503 after about one second and no device changed state;
 after a restart the next request was executed normally.
 
+Figure 7 of the paper (`results/feasibility/latency.png`) shows the median
+latencies of the table next to the 0.1 s from which a user notices a delay.
+
 The home and its misuse are small and synthetic: these figures show trained
 models running on the request path and what they cost, not detection
 performance on real households.
@@ -102,6 +105,8 @@ The second run needs scikit-learn as well:
     docker compose -f docker-compose.feasibility.yml up -d --build
     python -m experiments.feasibility.run
     docker compose -f docker-compose.feasibility.yml down
+    pip install matplotlib                       # for the figure only
+    python -m experiments.feasibility.plot
 
 Latency and CPU depend on the machine; the outcomes of each request do not.
 
