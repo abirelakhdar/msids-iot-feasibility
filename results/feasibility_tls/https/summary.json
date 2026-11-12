@@ -1,0 +1,288 @@
+{
+ "https": true,
+ "machine": {
+  "system": "Windows-11-10.0.26200-SP0",
+  "logical_cpus": 8,
+  "python": "3.13.7"
+ },
+ "workload": {
+  "requests": 199,
+  "kinds": {
+   "normal": 172,
+   "night_unlock": 3,
+   "oscillation": 18,
+   "extreme_setpoint": 3,
+   "visitor_probe": 3
+  },
+  "repetitions": 4
+ },
+ "detectors": {
+  "none": {
+   "outcomes": {
+    "success": 196,
+    "denied": 3
+   },
+   "outcomes_by_kind": {
+    "normal": {
+     "success": 172
+    },
+    "night_unlock": {
+     "success": 3
+    },
+    "oscillation": {
+     "success": 18
+    },
+    "extreme_setpoint": {
+     "success": 3
+    },
+    "visitor_probe": {
+     "denied": 3
+    }
+   },
+   "same_outcomes_in_every_repetition": true,
+   "errors": 0,
+   "latency_ms": {
+    "median": 13.3,
+    "p95": 15.86,
+    "max": 32.87
+   },
+   "idms_alone_ms": {
+    "calls": 784,
+    "median": 2.6,
+    "p95": 3.51
+   },
+   "containers": {
+    "dcms": {
+     "cpu_percent_mean": 9.33,
+     "cpu_percent_max": 16.87,
+     "memory_mib_max": 36.6
+    },
+    "gateway": {
+     "cpu_percent_mean": 28.76,
+     "cpu_percent_max": 52.54,
+     "memory_mib_max": 40.5
+    },
+    "idms": {
+     "cpu_percent_mean": 6.1,
+     "cpu_percent_max": 11.19,
+     "memory_mib_max": 102.0
+    },
+    "umms": {
+     "cpu_percent_mean": 5.81,
+     "cpu_percent_max": 10.41,
+     "memory_mib_max": 35.9
+    }
+   },
+   "median_added_vs_none_ms": 0.0
+  },
+  "rules": {
+   "outcomes": {
+    "success": 193,
+    "blocked": 3,
+    "denied": 3
+   },
+   "outcomes_by_kind": {
+    "normal": {
+     "success": 172
+    },
+    "night_unlock": {
+     "blocked": 3
+    },
+    "oscillation": {
+     "success": 18
+    },
+    "extreme_setpoint": {
+     "success": 3
+    },
+    "visitor_probe": {
+     "denied": 3
+    }
+   },
+   "same_outcomes_in_every_repetition": true,
+   "errors": 0,
+   "latency_ms": {
+    "median": 13.38,
+    "p95": 16.27,
+    "max": 45.32
+   },
+   "idms_alone_ms": {
+    "calls": 784,
+    "median": 2.77,
+    "p95": 3.65
+   },
+   "containers": {
+    "dcms": {
+     "cpu_percent_mean": 8.39,
+     "cpu_percent_max": 16.83,
+     "memory_mib_max": 36.2
+    },
+    "gateway": {
+     "cpu_percent_mean": 25.44,
+     "cpu_percent_max": 51.24,
+     "memory_mib_max": 40.7
+    },
+    "idms": {
+     "cpu_percent_mean": 5.85,
+     "cpu_percent_max": 11.62,
+     "memory_mib_max": 102.3
+    },
+    "umms": {
+     "cpu_percent_mean": 5.21,
+     "cpu_percent_max": 10.37,
+     "memory_mib_max": 35.9
+    }
+   },
+   "median_added_vs_none_ms": 0.08
+  },
+  "tree": {
+   "outcomes": {
+    "success": 166,
+    "blocked": 30,
+    "denied": 3
+   },
+   "outcomes_by_kind": {
+    "normal": {
+     "success": 163,
+     "blocked": 9
+    },
+    "night_unlock": {
+     "blocked": 3
+    },
+    "oscillation": {
+     "success": 3,
+     "blocked": 15
+    },
+    "extreme_setpoint": {
+     "blocked": 3
+    },
+    "visitor_probe": {
+     "denied": 3
+    }
+   },
+   "same_outcomes_in_every_repetition": true,
+   "errors": 0,
+   "latency_ms": {
+    "median": 13.91,
+    "p95": 17.56,
+    "max": 27.6
+   },
+   "idms_alone_ms": {
+    "calls": 784,
+    "median": 3.29,
+    "p95": 4.19
+   },
+   "containers": {
+    "dcms": {
+     "cpu_percent_mean": 7.63,
+     "cpu_percent_max": 15.27,
+     "memory_mib_max": 36.3
+    },
+    "gateway": {
+     "cpu_percent_mean": 24.75,
+     "cpu_percent_max": 50.49,
+     "memory_mib_max": 40.5
+    },
+    "idms": {
+     "cpu_percent_mean": 7.28,
+     "cpu_percent_max": 14.76,
+     "memory_mib_max": 102.2
+    },
+    "umms": {
+     "cpu_percent_mean": 5.03,
+     "cpu_percent_max": 10.08,
+     "memory_mib_max": 36.1
+    }
+   },
+   "median_added_vs_none_ms": 0.61
+  },
+  "svm": {
+   "outcomes": {
+    "success": 175,
+    "blocked": 21,
+    "denied": 3
+   },
+   "outcomes_by_kind": {
+    "normal": {
+     "success": 172
+    },
+    "night_unlock": {
+     "blocked": 3
+    },
+    "oscillation": {
+     "blocked": 15,
+     "success": 3
+    },
+    "extreme_setpoint": {
+     "blocked": 3
+    },
+    "visitor_probe": {
+     "denied": 3
+    }
+   },
+   "same_outcomes_in_every_repetition": true,
+   "errors": 0,
+   "latency_ms": {
+    "median": 15.96,
+    "p95": 19.09,
+    "max": 27.62
+   },
+   "idms_alone_ms": {
+    "calls": 784,
+    "median": 5.5,
+    "p95": 6.66
+   },
+   "containers": {
+    "dcms": {
+     "cpu_percent_mean": 8.89,
+     "cpu_percent_max": 13.63,
+     "memory_mib_max": 36.5
+    },
+    "gateway": {
+     "cpu_percent_mean": 28.13,
+     "cpu_percent_max": 43.77,
+     "memory_mib_max": 40.8
+    },
+    "idms": {
+     "cpu_percent_mean": 15.22,
+     "cpu_percent_max": 23.82,
+     "memory_mib_max": 101.9
+    },
+    "umms": {
+     "cpu_percent_mean": 5.64,
+     "cpu_percent_max": 8.9,
+     "memory_mib_max": 36.0
+    }
+   },
+   "median_added_vs_none_ms": 2.66
+  }
+ },
+ "swaps": {
+  "count": 16,
+  "max_seconds": 0.003
+ },
+ "idms_failure": {
+  "while_down": [
+   {
+    "request": "turn_on lamp_01",
+    "http_status": 503,
+    "milliseconds": 1012.2
+   },
+   {
+    "request": "unlock lock_01",
+    "http_status": 503,
+    "milliseconds": 1019.0
+   },
+   {
+    "request": "set_temperature thermostat_01",
+    "http_status": 503,
+    "milliseconds": 1033.8
+   }
+  ],
+  "devices_unchanged": true,
+  "seconds_until_idms_healthy": 1.0,
+  "first_request_after_restart": {
+   "http_status": 200,
+   "outcome": "success"
+  }
+ }
+}

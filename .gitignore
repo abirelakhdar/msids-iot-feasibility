@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
+# Test certificates of the HTTPS runs: python -m experiments.feasibility.make_certs
+experiments/feasibility/tls/

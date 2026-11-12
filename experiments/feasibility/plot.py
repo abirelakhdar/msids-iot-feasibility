@@ -2,15 +2,18 @@
 
     python -m experiments.feasibility.plot
 
-Reads results/feasibility/requests.csv (796 requests per detector: 199 x 4 runs)
-and summary.json, and writes results/feasibility/latency.png (300 dpi) and
-latency.svg: for each detector, a box of the whole-request latency (quartiles,
+Reads requests.csv (796 requests per detector: 199 x 4 runs) and summary.json
+of results/feasibility, or of the folder given by FEASIBILITY_OUT (the paper uses
+results/feasibility_tls/https), and writes latency.png (300 dpi) and latency.svg
+there: for each detector, a box of the whole-request latency (quartiles,
 whiskers from the 5th to the 95th percentile, points outside) and a diamond at
 the median latency of the IDMS alone. Colours are those of the paper's other
 figures (papers/msids_architecture/figures.py).
 """
 import csv
 import json
+import math
+import os
 from pathlib import Path
 
 import matplotlib
@@ -20,7 +23,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
 from matplotlib.patches import Patch  # noqa: E402
 
-OUT = Path("results/feasibility")
+OUT = Path(os.getenv("FEASIBILITY_OUT", "results/feasibility"))
 INK, FILL, EDGE, ACCENT, MUTED = "#1f2933", "#e4edf5", "#3e4c59", "#b03a2e", "#9aa5b1"
 LABELS = {"none": "None", "rules": "Rule", "tree": "Decision tree", "svm": "SVM"}
 
@@ -45,7 +48,7 @@ def main() -> None:
     ax.scatter(alone, ys, marker="D", s=40, color=ACCENT, zorder=3)
     ax.set_yticks(ys, [LABELS[d] for d in order])
     ax.invert_yaxis()
-    ax.set_xlim(0, 70)
+    ax.set_xlim(0, 10 * math.ceil(max(max(v) for v in whole.values()) / 10))
     ax.set_xlabel("Latency per request (ms)")
     ax.grid(axis="x", color="#e5e5e5", lw=0.6)
     ax.set_axisbelow(True)

@@ -1,0 +1,37 @@
+# The six requests of the first check with HTTPS on every hop, added on top of docker-compose.yml:
+#
+#     python -m experiments.feasibility.make_certs
+#     docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
+#     FEASIBILITY_TLS=1 python -m experiments.mvp_demo
+#     docker compose -f docker-compose.yml -f docker-compose.https.yml down
+#
+# Same images, policy and ports; each service serves HTTPS with the test
+# certificate, the gateway verifies the others against the test authority, and
+# the traces are written to results/mvp_https.
+services:
+  gateway:
+    command: uvicorn gateway.main:app --host 0.0.0.0 --port 8000 --log-level warning --ssl-keyfile /certs/server.key --ssl-certfile /certs/server.pem
+    environment:
+      UMMS_URL: https://umms:8003
+      IDMS_URL: https://idms:8001
+      DCMS_URL: https://dcms:8002
+      SSL_CERT_FILE: /certs/ca.pem
+    volumes:
+      - ./results/mvp_https:/app/out
+      - ./experiments/feasibility/tls:/certs:ro
+
+  idms:
+    command: uvicorn idms.main:app --host 0.0.0.0 --port 8001 --log-level warning --ssl-keyfile /certs/server.key --ssl-certfile /certs/server.pem
+    volumes:
+      - ./experiments/mvp:/app/mvp:ro
+      - ./experiments/feasibility/tls:/certs:ro
+
+  dcms:
+    command: uvicorn dcms.main:app --host 0.0.0.0 --port 8002 --log-level warning --ssl-keyfile /certs/server.key --ssl-certfile /certs/server.pem
+    volumes:
+      - ./experiments/feasibility/tls:/certs:ro
+
+  umms:
+    command: uvicorn umms.main:app --host 0.0.0.0 --port 8003 --log-level warning --ssl-keyfile /certs/server.key --ssl-certfile /certs/server.pem
+    volumes:
+      - ./experiments/feasibility/tls:/certs:ro

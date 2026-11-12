@@ -1,0 +1,37 @@
+# The feasibility check with HTTPS on every hop, added on top of the HTTP stack:
+#
+#     python -m experiments.feasibility.make_certs
+#     docker compose -f docker-compose.feasibility.yml -f docker-compose.feasibility-https.yml up -d --build
+#     FEASIBILITY_TLS=1 FEASIBILITY_OUT=results/feasibility_https python -m experiments.feasibility.run
+#     docker compose -f docker-compose.feasibility.yml -f docker-compose.feasibility-https.yml down
+#
+# Same images, detectors, ports and settings; each service serves HTTPS with the
+# test certificate of experiments/feasibility/tls, and the gateway verifies the
+# others against the test authority (SSL_CERT_FILE). Nothing else changes.
+x-tls: &tls
+  volumes:
+    - ./experiments/feasibility/tls:/certs:ro
+
+services:
+  gateway:
+    <<: *tls
+    command: uvicorn gateway.main:app --host 0.0.0.0 --port 8000 --log-level warning --ssl-keyfile /certs/server.key --ssl-certfile /certs/server.pem
+    environment:
+      UMMS_URL: https://umms:8003
+      IDMS_URL: https://idms:8001
+      DCMS_URL: https://dcms:8002
+      SSL_CERT_FILE: /certs/ca.pem
+
+  idms:
+    command: uvicorn idms.main:app --host 0.0.0.0 --port 8001 --log-level warning --ssl-keyfile /certs/server.key --ssl-certfile /certs/server.pem
+    volumes:
+      - ./experiments/feasibility/models:/app/feasibility_models:ro
+      - ./experiments/feasibility/tls:/certs:ro
+
+  dcms:
+    <<: *tls
+    command: uvicorn dcms.main:app --host 0.0.0.0 --port 8002 --log-level warning --ssl-keyfile /certs/server.key --ssl-certfile /certs/server.pem
+
+  umms:
+    <<: *tls
+    command: uvicorn umms.main:app --host 0.0.0.0 --port 8003 --log-level warning --ssl-keyfile /certs/server.key --ssl-certfile /certs/server.pem

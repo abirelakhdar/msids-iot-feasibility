@@ -14,11 +14,15 @@ sampled with `docker stats`. Then the IDMS is stopped and started again, to see
 what the gateway does without it.
 
 Writes results/feasibility/summary.json and results/feasibility/requests.csv.
+With FEASIBILITY_TLS=1 every hop uses HTTPS (docker-compose.feasibility-https.yml
+on top of the HTTP stack, certificates from make_certs.py); FEASIBILITY_OUT sets
+another output folder.
 """
 import csv
 import json
 import os
 import platform
+import ssl
 import statistics
 import subprocess
 import threading
@@ -30,11 +34,16 @@ import httpx
 
 from experiments.feasibility.scenario import TEST_START, generate
 
-URLS = {"gateway": "http://127.0.0.1:8400", "idms": "http://127.0.0.1:8401", "dcms": "http://127.0.0.1:8402"}
+TLS = os.getenv("FEASIBILITY_TLS") == "1"
+SCHEME = "https" if TLS else "http"
+URLS = {"gateway": f"{SCHEME}://127.0.0.1:8400", "idms": f"{SCHEME}://127.0.0.1:8401",
+        "dcms": f"{SCHEME}://127.0.0.1:8402"}
 COMPOSE = ["docker", "compose", "-f", "docker-compose.feasibility.yml"]
+if TLS:
+    COMPOSE += ["-f", "docker-compose.feasibility-https.yml"]
 DETECTORS = ["none", "rules", "tree", "svm"]
 REPETITIONS = 4  # the order of the detectors rotates, so each runs once in each position
-OUT = Path("results/feasibility")
+OUT = Path(os.getenv("FEASIBILITY_OUT", "results/feasibility"))
 
 
 def wait_healthy(client: httpx.Client, seconds: float = 90) -> float:
@@ -154,7 +163,8 @@ def failure_test(gw, idms, dcms) -> dict:
 
 
 def main() -> None:
-    clients = {name: httpx.Client(base_url=url, timeout=30) for name, url in URLS.items()}
+    verify = ssl.create_default_context(cafile=Path(__file__).parent / "tls" / "ca.pem") if TLS else True
+    clients = {name: httpx.Client(base_url=url, timeout=30, verify=verify) for name, url in URLS.items()}
     gw, idms, dcms = clients["gateway"], clients["idms"], clients["dcms"]
     for client in clients.values():
         wait_healthy(client)
@@ -180,7 +190,7 @@ def main() -> None:
             for service, values in samples.items():
                 stats[detector][service] += values
 
-    summary = {"machine": {"system": platform.platform(), "logical_cpus": os.cpu_count(),
+    summary = {"https": TLS, "machine": {"system": platform.platform(), "logical_cpus": os.cpu_count(),
                            "python": platform.python_version()},
                "workload": {"requests": len(requests), "kinds": dict(Counter(r["kind"] for r in requests)),
                             "repetitions": REPETITIONS},

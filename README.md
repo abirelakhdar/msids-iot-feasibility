@@ -35,10 +35,12 @@ rule that refuses to unlock the door between midnight and five, loaded through t
 same interface as a trained model. The check therefore shows that the services
 interact as designed; it does **not** measure detection performance, latency or
 scale. Devices are simulated, the caller's identity is taken from the request (no
-authentication), services talk plain HTTP, and traces are hashed but not signed.
+authentication), and traces are hashed but not signed. The services talk HTTPS
+with test certificates (see below), as the architecture requires.
 
-The recorded outcomes and traces are in `results/mvp/` (`outcomes.json`,
-`traces.jsonl`).
+The recorded outcomes and traces are in `results/mvp_https/` (`outcomes.json`,
+`traces.jsonl`); `results/mvp/` holds the same six requests over plain HTTP,
+with the same outcomes.
 
 ## Second run: trained models, latency, resources, failure of the IDMS
 
@@ -59,23 +61,34 @@ IDMS, next to the rule, and measures what the IDMS costs.
   IDMS alone, samples CPU and memory with `docker stats`, then stops the IDMS
   to see what the gateway does without it.
 
-Results (`results/feasibility/summary.json`, per-request rows in
+Every hop uses HTTPS: from the client to the gateway and from the gateway to
+the UMMS, the IDMS and the DCMS, with a test certificate authority whose
+certificate each caller verifies (`experiments/feasibility/make_certs.py`,
+`docker-compose.feasibility-https.yml`). Results (Table 8 of the paper:
+`results/feasibility_tls/https/summary.json`, per-request rows in
 `requests.csv`), on a laptop with 8 logical processors, Windows 11 and Docker
 Desktop:
 
 | Detector | Blocked: misuse (of 24) / legitimate (of 172) | IDMS alone, median (p95), ms | Whole request, median (p95), ms | IDMS CPU, mean |
 |---|---|---|---|---|
-| None | 0 / 0 | 3.9 (6.0) | 17.5 (28.2) | 9.0% |
-| Rule (control baseline) | 3 / 0 | 4.1 (7.3) | 18.0 (29.7) | 9.9% |
-| Decision tree | 21 / 9 | 4.5 (8.4) | 17.6 (28.8) | 11.9% |
-| SVM | 21 / 0 | 7.0 (12.3) | 22.1 (37.7) | 17.6% |
+| None | 0 / 0 | 2.6 (3.5) | 13.3 (15.9) | 6.1% |
+| Rule (control baseline) | 3 / 0 | 2.8 (3.7) | 13.4 (16.3) | 5.9% |
+| Decision tree | 21 / 9 | 3.3 (4.2) | 13.9 (17.6) | 7.3% |
+| SVM | 21 / 0 | 5.5 (6.7) | 16.0 (19.1) | 15.2% |
 
-The IDMS used about 100 MiB of memory with every detector. With the IDMS
+The IDMS used about 100 MiB of memory with every detector. The same run over
+plain HTTP, made just before in the same session (`results/feasibility_tls/http/`),
+gave the same outcome for every request and a median latency 1.3 to 1.4 ms
+lower: this is what encryption costs. `results/feasibility/` holds an earlier
+HTTP run from another session (October 2026); latencies differ from one session
+to the next, which is why HTTPS is compared with HTTP of the same session only.
+
+With the IDMS
 stopped and the gateway waiting at most one second (`IDMS_TIMEOUT`), requests
 were refused with HTTP 503 after about one second and no device changed state;
 after a restart the next request was executed normally.
 
-Figure 7 of the paper (`results/feasibility/latency.png`) shows the latency of
+Figure 7 of the paper (`results/feasibility_tls/https/latency.png`) shows the latency of
 every request with each detector (boxes: quartiles; whiskers: 5th to 95th
 percentile) and the median latency of the IDMS alone.
 
@@ -93,6 +106,13 @@ packages of `requirements.txt` (for the demo script and the tests).
     python -m experiments.mvp_demo
     docker compose down
 
+The same over HTTPS (needs the `openssl` command for the test certificates):
+
+    python -m experiments.feasibility.make_certs
+    docker compose -f docker-compose.yml -f docker-compose.https.yml up -d --build
+    FEASIBILITY_TLS=1 python -m experiments.mvp_demo
+    docker compose -f docker-compose.yml -f docker-compose.https.yml down
+
 Each request carries a set clock time (simulation mode), so the run gives the same
 outcomes every time; the script exits with an error if any outcome differs from
 the expected one. The same scenarios also run in one process, without Docker:
@@ -108,6 +128,15 @@ The second run needs scikit-learn as well:
     docker compose -f docker-compose.feasibility.yml down
     pip install matplotlib                       # for the figure only
     python -m experiments.feasibility.plot
+
+Over HTTPS, as in the paper (FEASIBILITY_OUT chooses the output folder, also
+for the figure):
+
+    python -m experiments.feasibility.make_certs
+    docker compose -f docker-compose.feasibility.yml -f docker-compose.feasibility-https.yml up -d --build
+    FEASIBILITY_TLS=1 FEASIBILITY_OUT=results/feasibility_tls/https python -m experiments.feasibility.run
+    docker compose -f docker-compose.feasibility.yml -f docker-compose.feasibility-https.yml down
+    FEASIBILITY_OUT=results/feasibility_tls/https python -m experiments.feasibility.plot
 
 Latency and CPU depend on the machine; the outcomes of each request do not.
 

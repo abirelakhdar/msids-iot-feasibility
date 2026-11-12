@@ -1,0 +1,106 @@
+[
+ {
+  "scenario": "Resident unlocks the door on coming home",
+  "time": "2026-10-14T18:05:00+00:00",
+  "user_id": "admin_01",
+  "request": "unlock lock_01",
+  "http_status": 200,
+  "status": "success",
+  "idms_decision": "ALLOW",
+  "reason": "rules: nothing fired",
+  "state_before": {
+   "locked": true
+  },
+  "state_after": {
+   "locked": false
+  },
+  "trace_id": "tr_7424b0a698dc4ac483a85c8a9748e138",
+  "expected": "success"
+ },
+ {
+  "scenario": "Resident locks the door",
+  "time": "2026-10-14T18:06:00+00:00",
+  "user_id": "admin_01",
+  "request": "lock lock_01",
+  "http_status": 200,
+  "status": "success",
+  "idms_decision": "ALLOW",
+  "reason": "rules: nothing fired",
+  "state_before": {
+   "locked": false
+  },
+  "state_after": {
+   "locked": true
+  },
+  "trace_id": "tr_b35995a2de82450f9a8d99ec8355d1e8",
+  "expected": "success"
+ },
+ {
+  "scenario": "Household member turns on the lamp",
+  "time": "2026-10-14T19:30:00+00:00",
+  "user_id": "user_01",
+  "request": "turn_on lamp_01",
+  "http_status": 200,
+  "status": "success",
+  "idms_decision": "ALLOW",
+  "reason": "rules: nothing fired",
+  "state_before": {
+   "power": "off"
+  },
+  "state_after": {
+   "power": "on"
+  },
+  "trace_id": "tr_c947e25d29dd47548cfa707a774979b6",
+  "expected": "success"
+ },
+ {
+  "scenario": "Visitor tries to unlock the door",
+  "time": "2026-10-14T20:15:00+00:00",
+  "user_id": "guest_01",
+  "request": "unlock lock_01",
+  "http_status": 403,
+  "status": "denied",
+  "idms_decision": null,
+  "reason": "role 'guest' may not control 'lock' devices",
+  "state_before": {
+   "locked": true
+  },
+  "state_after": {
+   "locked": true
+  },
+  "trace_id": "tr_eebd13d4730d47d19bd5d602132f3479",
+  "expected": "denied"
+ },
+ {
+  "scenario": "Resident's account unlocks the door at night",
+  "time": "2026-10-15T03:10:00+00:00",
+  "user_id": "admin_01",
+  "request": "unlock lock_01",
+  "http_status": 403,
+  "status": "blocked",
+  "idms_decision": "REJECT",
+  "reason": "rules: night_unlock",
+  "state_before": {
+   "locked": true
+  },
+  "state_after": {
+   "locked": true
+  },
+  "trace_id": "tr_fbf6e9ebdd354472a45810b0d5b03e2b",
+  "expected": "blocked"
+ },
+ {
+  "scenario": "Trace altered between the gateway and the IDMS",
+  "time": "2026-10-15T03:20:00+00:00",
+  "user_id": "user_01",
+  "request": "turn_on lamp_01, altered into unlock lock_01",
+  "http_status": null,
+  "status": "rejected by the IDMS",
+  "idms_decision": "REJECT",
+  "reason": "trace hash mismatch",
+  "state_before": null,
+  "state_after": null,
+  "trace_id": "tr_altered_demo",
+  "expected": "REJECT"
+ }
+]

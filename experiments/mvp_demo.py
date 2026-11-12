@@ -12,8 +12,14 @@ no learned model, no detection rate, no latency; these are outside the scope of 
 
 The IDMS holds a placeholder policy (experiments/mvp/rules.json): the door is
 not unlocked between midnight and five. It stands in for the detector.
+
+With FEASIBILITY_TLS=1 every hop uses HTTPS (docker-compose.https.yml on top of
+docker-compose.yml, certificates from experiments/feasibility/make_certs.py)
+and the results go to results/mvp_https.
 """
 import json
+import os
+import ssl
 import sys
 import time
 from datetime import datetime, timezone
@@ -23,8 +29,11 @@ import httpx
 
 from shared.trace_schema import ExecutionTrace, TraceContext, TraceTarget
 
-URLS = {"gateway": "http://127.0.0.1:8300", "idms": "http://127.0.0.1:8301", "dcms": "http://127.0.0.1:8302"}
-OUT = Path("results/mvp")
+TLS = os.getenv("FEASIBILITY_TLS") == "1"
+SCHEME = "https" if TLS else "http"
+URLS = {"gateway": f"{SCHEME}://127.0.0.1:8300", "idms": f"{SCHEME}://127.0.0.1:8301",
+        "dcms": f"{SCHEME}://127.0.0.1:8302"}
+OUT = Path("results/mvp_https" if TLS else "results/mvp")
 
 # Accounts of the UMMS: admin_01 is the resident, user_01 another member of the
 # household, guest_01 a visitor who may use the lamp only.
@@ -128,7 +137,8 @@ def wait_until_up(clients: dict, seconds: float = 60) -> None:
 
 
 def main() -> None:
-    clients = {name: httpx.Client(base_url=url, timeout=10) for name, url in URLS.items()}
+    verify = ssl.create_default_context(cafile="experiments/feasibility/tls/ca.pem") if TLS else True
+    clients = {name: httpx.Client(base_url=url, timeout=10, verify=verify) for name, url in URLS.items()}
     wait_until_up(clients)
     detector = clients["idms"].get("/detector").json()["detector"]
     if detector != "rules":
