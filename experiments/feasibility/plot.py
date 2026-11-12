@@ -1,14 +1,15 @@
-"""Figure 7 of the architecture paper: median latency of a request with each detector.
+"""Figure 7 of the architecture paper: latency of each request with each detector.
 
     python -m experiments.feasibility.plot
 
-Reads results/feasibility/summary.json (medians over 796 requests per detector:
-199 x 4 runs) and writes results/feasibility/latency.png (300 dpi) and latency.svg:
-for each detector, the whole request (user to device) and the IDMS alone, with the
-0.1 s limit from which a user notices a delay (Nielsen, Usability Engineering,
-1993). Colours are those of the paper's other figures
-(papers/msids_architecture/figures.py).
+Reads results/feasibility/requests.csv (796 requests per detector: 199 x 4 runs)
+and summary.json, and writes results/feasibility/latency.png (300 dpi) and
+latency.svg: for each detector, a box of the whole-request latency (quartiles,
+whiskers from the 5th to the 95th percentile, points outside) and a diamond at
+the median latency of the IDMS alone. Colours are those of the paper's other
+figures (papers/msids_architecture/figures.py).
 """
+import csv
 import json
 from pathlib import Path
 
@@ -16,41 +17,49 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.lines import Line2D  # noqa: E402
+from matplotlib.patches import Patch  # noqa: E402
 
 OUT = Path("results/feasibility")
-INK, FILL, EDGE, ACCENT, MUTED = "#1f2933", "#d6e4f0", "#3e4c59", "#b03a2e", "#9aa5b1"
+INK, FILL, EDGE, ACCENT, MUTED = "#1f2933", "#e4edf5", "#3e4c59", "#b03a2e", "#9aa5b1"
 LABELS = {"none": "None", "rules": "Rule", "tree": "Decision tree", "svm": "SVM"}
 
 
 def main() -> None:
     summary = json.loads((OUT / "summary.json").read_text(encoding="utf-8"))
     order = list(LABELS)
-    whole = [summary["detectors"][d]["latency_ms"]["median"] for d in order]
+    whole = {d: [] for d in order}
+    with open(OUT / "requests.csv", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            whole[row["detector"]].append(float(row["milliseconds"]))
     alone = [summary["detectors"][d]["idms_alone_ms"]["median"] for d in order]
 
     plt.rcParams.update({"font.family": "Arial", "font.size": 9})
     fig, ax = plt.subplots(figsize=(6.3, 2.8))
-    ys, h = range(len(order)), 0.36
-    ax.barh([y - h / 2 for y in ys], whole, height=h, color=FILL, edgecolor=EDGE, lw=0.8,
-            label="Whole request (user to device)")
-    ax.barh([y + h / 2 for y in ys], alone, height=h, color=ACCENT, label="IDMS alone (its decision)")
-    for y, w, a in zip(ys, whole, alone):
-        # 17.45 is written 17.5, as in Table 8
-        ax.text(w + 1.2, y - h / 2, f"{w + 1e-9:.1f} ms", va="center", fontsize=8.5, color=INK)
-        ax.text(a + 1.2, y + h / 2, f"{a + 1e-9:.1f} ms", va="center", fontsize=8.5, color=ACCENT)
-    ax.axvline(100, color=MUTED, ls="--", lw=1)
-    ax.text(98.5, -0.55, "0.1 s: a user starts\nto notice a delay", ha="right", va="top", fontsize=8, color=EDGE)
-    ax.set_yticks(list(ys), [LABELS[d] for d in order])
+    ys = list(range(len(order)))
+    ax.boxplot([whole[d] for d in order], positions=ys, orientation="horizontal", whis=(5, 95), widths=0.5,
+               patch_artist=True, boxprops=dict(facecolor=FILL, edgecolor=EDGE, lw=0.9),
+               medianprops=dict(color=INK, lw=1.6), whiskerprops=dict(color=EDGE, lw=0.9),
+               capprops=dict(color=EDGE, lw=0.9),
+               flierprops=dict(marker="o", ms=2, mfc=MUTED, mec="none"))
+    ax.scatter(alone, ys, marker="D", s=40, color=ACCENT, zorder=3)
+    ax.set_yticks(ys, [LABELS[d] for d in order])
     ax.invert_yaxis()
-    ax.set_xlim(0, 105)
-    ax.set_xlabel("Median latency (ms)")
+    ax.set_xlim(0, 70)
+    ax.set_xlabel("Latency per request (ms)")
+    ax.grid(axis="x", color="#e5e5e5", lw=0.6)
+    ax.set_axisbelow(True)
     for side in ("top", "right"):
         ax.spines[side].set_visible(False)
-    ax.legend(loc="upper center", bbox_to_anchor=(0.45, -0.22), ncol=2, frameon=False, fontsize=8.5)
+    ax.legend([Patch(facecolor=FILL, edgecolor=EDGE),
+               Line2D([], [], marker="D", ls="none", color=ACCENT)],
+              ["Latency of the whole request through the gateway (box: quartiles; whiskers: 5th to 95th percentile)",
+               "Latency of the IDMS alone (median)"],
+              loc="upper left", bbox_to_anchor=(-0.02, -0.2), frameon=False, fontsize=8.5)
     fig.tight_layout()
     for ext in ("png", "svg"):
         fig.savefig(OUT / f"latency.{ext}", dpi=300, bbox_inches="tight")
-    print({LABELS[d]: (w, a) for d, w, a in zip(order, whole, alone)})
+    print({LABELS[d]: (len(whole[d]), a) for d, a in zip(order, alone)})
 
 
 if __name__ == "__main__":

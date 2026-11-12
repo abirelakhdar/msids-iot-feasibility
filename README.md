@@ -75,8 +75,9 @@ stopped and the gateway waiting at most one second (`IDMS_TIMEOUT`), requests
 were refused with HTTP 503 after about one second and no device changed state;
 after a restart the next request was executed normally.
 
-Figure 7 of the paper (`results/feasibility/latency.png`) shows the median
-latencies of the table next to the 0.1 s from which a user notices a delay.
+Figure 7 of the paper (`results/feasibility/latency.png`) shows the latency of
+every request with each detector (boxes: quartiles; whiskers: 5th to 95th
+percentile) and the median latency of the IDMS alone.
 
 The home and its misuse are small and synthetic: these figures show trained
 models running on the request path and what they cost, not detection
